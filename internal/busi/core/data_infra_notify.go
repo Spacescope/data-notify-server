@@ -77,7 +77,7 @@ func topicsFind(ctx context.Context) ([]*busi.Topics, error) {
 	}
 
 	if len(t) == 0 {
-		log.Warning("No relevant topics data.")
+		log.Warning("No relevant data of topics.")
 		return nil, nil
 	}
 
@@ -139,6 +139,3 @@ func recordTipset(ctx context.Context, topicId uint64, topicName string, tipset 
 		return t.Version, nil
 	}
 }
-
-// 下午继续实现insert tipset功能，封装
-// 另外弄confidence时间队列，弄个ticket
