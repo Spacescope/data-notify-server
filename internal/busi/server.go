@@ -47,7 +47,7 @@ func (s *Server) Start() {
 	go HttpServerStart(s.Cf.DataExtraction.Addr)
 
 	{
-		s.wg.Add(1)
+		s.wg.Add(2)
 		ctx, cancel := context.WithCancel(s.Ctx)
 		go NotifyServerStart(ctx, s.wg.Done, s.Cf.DataExtraction.Lotus0, s.Cf.DataExtraction.MQ)
 		<-s.sigHandle()
