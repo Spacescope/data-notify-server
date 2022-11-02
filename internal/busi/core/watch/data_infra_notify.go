@@ -1,7 +1,8 @@
-package core
+package watch
 
 import (
 	"context"
+	"data-extraction-notify/internal/busi/core/cache"
 	"data-extraction-notify/pkg/models/busi"
 	"data-extraction-notify/pkg/utils"
 	"encoding/json"
@@ -16,8 +17,37 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func PushTipsets(cli *redis.Client, changeSlice []*lotusapi.HeadChange) error {
-	buffer := make([]types.TipSet, 0, len(changeSlice))
+var tipsetsCache *cache.TipSetCache
+
+type NotifyEvent struct {
+	ctx  context.Context
+	done func()
+
+	cache        *cache.TipSetCache // caches tipsets for possible reversion
+	tick         *time.Ticker
+	jobIsRunning bool // if a job is running
+}
+
+func NewNotifyEvent(ctx context.Context, done func(), c *cache.TipSetCache) *NotifyEvent {
+
+	w := &NotifyEvent{
+		ctx:  ctx,
+		done: done,
+
+		cache:        cache.NewTipSetCache(),
+		tick:         time.NewTicker(35 * time.Second),
+		jobIsRunning: false,
+	}
+
+	return w
+}
+
+var notifyEvent *NotifyEvent
+
+func PushTipsets(ctx context.Context, done func(), cli *redis.Client, changeSlice []*lotusapi.HeadChange) {
+	if notifyEvent == nil {
+		notifyEvent = NewNotifyEvent(ctx, done, tipsetsCache)
+	}
 
 	// Eliminate unnecessary "revert" data and
 	// merge the same height tipset: apply0, apply1, applyN...
@@ -26,47 +56,64 @@ func PushTipsets(cli *redis.Client, changeSlice []*lotusapi.HeadChange) error {
 			continue
 		}
 
-		if len(buffer) == 0 {
-			buffer = append(buffer, *event.Val)
-			log.Infof("Notify emitted tipset: %v", event.Val.Height())
-		} else {
-			if event.Val.Height() != buffer[len(buffer)-1].Height() { // remove-duplicates-from-sorted-array
-				buffer = append(buffer, *event.Val)
-				log.Infof("Notify emitted tipset: %v", event.Val.Height())
-			}
-		}
+		log.Infof("recieve: %v", event.Val.Height())
+		notifyEvent.cache.Add(event.Val)
 	}
 
-	// find relevant topics
-	topics, err := topicsFind(context.Background())
-	if err != nil || topics == nil {
+	if !notifyEvent.jobIsRunning {
+		go notifyEvent.cacheConsumer(cli)
+	}
+}
+
+func (n *NotifyEvent) cacheConsumer(cli *redis.Client) {
+	f := func() error {
+		buffer, err := n.cache.PopAll()
+		if err != nil {
+			return nil
+		}
+
+		// find relevant topics
+		topics, err := topicsFind(context.Background())
+		if err != nil || topics == nil {
+			return nil
+		}
+
+		// Push tipset to multiple topics of mq.
+		for _, tipset := range buffer {
+			for _, topic := range topics {
+				version, err := recordTipset(context.Background(), topic.Id, topic.TopicName, tipset)
+				if err != nil {
+					continue
+				}
+
+				b, err := json.Marshal(&busi.Message{Version: int(version), Tipset: *tipset})
+				if err != nil {
+					log.Errorf("T: %v marshal json error: %v", tipset.Height(), err)
+					return err
+				}
+
+				log.Infof("push tipset: %v/version: %v to topic: %v", tipset.Height(), version, topic.TopicName)
+				err = cli.LPush(topic.TopicName, b).Err()
+				if err != nil {
+					log.Errorf("push tipset: err: %v", tipset.Height(), err)
+					return err
+				}
+			}
+		}
 		return nil
 	}
 
-	// Push tipset to multiple topics of mq.
-	for _, tipset := range buffer {
-		for _, topic := range topics {
-			version, err := recordTipset(context.Background(), topic.Id, topic.TopicName, &tipset)
-			if err != nil {
-				continue
-			}
-
-			b, err := json.Marshal(&busi.Message{Version: int(version), Tipset: tipset})
-			if err != nil {
-				log.Errorf("T: %v marshal json error: %v", tipset.Height(), err)
-				return err
-			}
-
-			log.Infof("push tipset: %v/version: %v to topic: %v", tipset.Height(), version, topic.TopicName)
-			err = cli.LPush(topic.TopicName, b).Err()
-			if err != nil {
-				log.Errorf("push tipset: err: %v", tipset.Height(), err)
-				return err
-			}
+	defer n.done()
+	for {
+		select {
+		case <-n.ctx.Done():
+			log.Errorf("ticktack, ctx done, receive signal: %s", n.ctx.Err().Error())
+			return
+		case <-n.tick.C:
+			log.Info("ticktack, cacheConsumer func running")
+			f()
 		}
 	}
-
-	return nil
 }
 
 func topicsFind(ctx context.Context) ([]*busi.Topics, error) {

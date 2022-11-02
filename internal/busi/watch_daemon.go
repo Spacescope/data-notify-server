@@ -2,7 +2,7 @@ package busi
 
 import (
 	"context"
-	"data-extraction-notify/internal/busi/core"
+	"data-extraction-notify/internal/busi/core/watch"
 	"time"
 
 	jsonrpc "github.com/filecoin-project/go-jsonrpc"
@@ -37,14 +37,14 @@ func NotifyServerStart(ctx context.Context, done func(), lotus0, mq string) {
 	s := NewNotifyServer(lotus0, mq)
 
 	for {
-		cancelSignal, _ := s.NotifyMQ(ctx)
+		cancelSignal, _ := s.Watcher(ctx, done)
 		if cancelSignal { // cancel due to signal
 			return
 		}
 	}
 }
 
-func (s *NotifyServer) NotifyMQ(ctx context.Context) (bool, error) { //(exit due to signal, return due to network problem/lotus problem)
+func (s *NotifyServer) Watcher(ctx context.Context, done func()) (bool, error) { //(exit due to signal, return due to network problem/lotus problem)
 	api, closer, err := s.lotusHandshake(ctx)
 	if err != nil {
 		log.Fatalf("calling chain head: %s", err)
@@ -72,9 +72,7 @@ func (s *NotifyServer) NotifyMQ(ctx context.Context) (bool, error) { //(exit due
 				return false, err
 			}
 			log.Info("Get the notify channel event.")
-			if err := core.PushTipsets(s.rdb, headerSlice); err != nil {
-				return false, err
-			}
+			watch.PushTipsets(ctx, done, s.rdb, headerSlice)
 		}
 	}
 }
