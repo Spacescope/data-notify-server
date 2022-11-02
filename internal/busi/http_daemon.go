@@ -11,14 +11,11 @@ import (
 
 func (s *HttpServer) registerV1(r *gin.Engine) {
 	apiv1 := r.Group("/v1")
-	// tokenGroup_apiv1 := apiv1.Group("", core.AuthFromGateway(), core.GinUidLogMiddleware())
-	// {
-	// 	tokenGroup_apiv1.GET("/network_core/transactions-usage/gas_fee_overview_h", v1.ListGasFeeOverviewH)
-	// }
-
-	apiv1.POST("/topic", v1.TopicSignIn)
-	apiv1.DELETE("/topic", v1.TopicDelete)
-	apiv1.POST("/task_state", v1.ReportTipsetState)
+	{
+		apiv1.POST("/topic", v1.TopicSignIn)
+		apiv1.DELETE("/topic", v1.TopicDelete)
+		apiv1.POST("/task_state", v1.ReportTipsetState)
+	}
 }
 
 func (s *HttpServer) RegisterRoutes(r *gin.Engine) {
