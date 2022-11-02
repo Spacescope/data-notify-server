@@ -30,7 +30,7 @@ func PushTipsets(cli *redis.Client, changeSlice []*lotusapi.HeadChange) error {
 			buffer = append(buffer, *event.Val)
 			log.Infof("Notify emitted tipset: %v", event.Val.Height())
 		} else {
-			if event.Val.Height() != buffer[len(buffer)-1].Height() { // leetcode: remove-duplicates-from-sorted-array
+			if event.Val.Height() != buffer[len(buffer)-1].Height() { // remove-duplicates-from-sorted-array
 				buffer = append(buffer, *event.Val)
 				log.Infof("Notify emitted tipset: %v", event.Val.Height())
 			}
