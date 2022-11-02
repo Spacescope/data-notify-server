@@ -59,7 +59,7 @@ func (s *NotifyServer) Watcher(ctx context.Context, done func()) (bool, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Errorf("ctx done, receive signal: %s", ctx.Err().Error())
+			log.Errorf("watcher, ctx done, receive signal: %s", ctx.Err().Error())
 			return true, nil
 		// case <-time.After(time.Second * 30): // heartbeat
 		// 	if _, err := api.ID(ctx); err != nil {
