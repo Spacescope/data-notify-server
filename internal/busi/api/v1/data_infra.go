@@ -17,7 +17,7 @@ import (
 // @Success 200 {object} nil
 // @Failure 400 {object} utils.ResponseWithRequestId
 // @Failure 500 {object} utils.ResponseWithRequestId
-// @Router /v1/topic [post]
+// @Router /api/v1/topic [post]
 func TopicSignIn(c *gin.Context) {
 	app := utils.Gin{C: c}
 
@@ -45,7 +45,7 @@ func TopicSignIn(c *gin.Context) {
 // @Success 200 {object} nil
 // @Failure 400 {object} utils.ResponseWithRequestId
 // @Failure 500 {object} utils.ResponseWithRequestId
-// @Router /v1/topic [delete]
+// @Router /api/v1/topic [delete]
 func TopicDelete(c *gin.Context) {
 	app := utils.Gin{C: c}
 
@@ -73,7 +73,7 @@ func TopicDelete(c *gin.Context) {
 // @Success 200 {object} nil
 // @Failure 400 {object} utils.ResponseWithRequestId
 // @Failure 500 {object} utils.ResponseWithRequestId
-// @Router /v1/task_state [post]
+// @Router /api/v1/task_state [post]
 func ReportTipsetState(c *gin.Context) {
 	app := utils.Gin{C: c}
 

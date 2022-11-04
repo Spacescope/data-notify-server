@@ -11,7 +11,7 @@
         "version": "1.0"
     },
     "host": "extractor-api.spacescope.io",
-    "basePath": "/",
+    "basePath": "/api/v1",
     "paths": {
         "/api/v1/ping": {
             "get": {
@@ -43,7 +43,7 @@
                 }
             }
         },
-        "/v1/task_state": {
+        "/api/v1/task_state": {
             "post": {
                 "description": "task will report tipset state with this API.",
                 "consumes": [
@@ -86,7 +86,7 @@
                 }
             }
         },
-        "/v1/topic": {
+        "/api/v1/topic": {
             "post": {
                 "description": "task group will sign in a mq topic use this API.",
                 "consumes": [

@@ -19,7 +19,7 @@ swag:
 	swag init -g cmd/data-extraction-notify/main.go
 
 binary:
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/data-extraction-notify cmd/data-extraction-notify/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/data-extraction-notify cmd/data-extraction-notify/main.go
 
 test:
 	go clean -testcache
