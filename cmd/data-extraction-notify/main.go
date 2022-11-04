@@ -19,7 +19,7 @@ import (
 // @contact.email xueyou@starboardventures.io
 
 // @host extractor-api.spacescope.io
-// @BasePath /
+// @BasePath /api/v1
 
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{

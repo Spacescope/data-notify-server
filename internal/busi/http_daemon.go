@@ -10,8 +10,10 @@ import (
 )
 
 func (s *HttpServer) registerV1(r *gin.Engine) {
-	apiv1 := r.Group("/v1")
+	apiv1 := r.Group("/api/v1")
 	{
+		apiv1.GET("/ping", v1.Ping)
+
 		apiv1.POST("/topic", v1.TopicSignIn)
 		apiv1.DELETE("/topic", v1.TopicDelete)
 		apiv1.POST("/task_state", v1.ReportTipsetState)
@@ -22,7 +24,6 @@ func (s *HttpServer) RegisterRoutes(r *gin.Engine) {
 	// r.Use(utils.Cors())
 	r.Use(cors.Default())
 	r.GET("/data-extraction-notify/swagger/*any", swagHandler)
-	r.GET("/api/v1/ping", v1.Ping)
 
 	s.registerV1(r)
 }

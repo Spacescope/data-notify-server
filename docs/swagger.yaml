@@ -1,4 +1,4 @@
-basePath: /
+basePath: /api/v1
 definitions:
   core.TipsetState:
     properties:
@@ -65,7 +65,7 @@ paths:
             type: string
       tags:
       - Sys
-  /v1/task_state:
+  /api/v1/task_state:
     post:
       consumes:
       - application/json
@@ -93,7 +93,7 @@ paths:
             $ref: '#/definitions/utils.ResponseWithRequestId'
       tags:
       - DATA-EXTRACTION-API-Internal-V1
-  /v1/topic:
+  /api/v1/topic:
     delete:
       consumes:
       - application/json

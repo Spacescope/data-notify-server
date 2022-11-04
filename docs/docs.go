@@ -50,7 +50,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/task_state": {
+        "/api/v1/task_state": {
             "post": {
                 "description": "task will report tipset state with this API.",
                 "consumes": [
@@ -93,7 +93,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/topic": {
+        "/api/v1/topic": {
             "post": {
                 "description": "task group will sign in a mq topic use this API.",
                 "consumes": [
@@ -239,7 +239,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "extractor-api.spacescope.io",
-	BasePath:         "/",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "spacescope data extraction notify backend",
 	Description:      "spacescope data extraction api backend",
