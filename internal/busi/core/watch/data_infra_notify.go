@@ -110,7 +110,7 @@ func (n *NotifyEvent) cacheConsumer(cli *redis.Client) {
 			log.Errorf("ticktack, ctx done, receive signal: %s", n.ctx.Err().Error())
 			return
 		case <-n.tick.C:
-			log.Info("ticktack, cacheConsumer func running")
+			log.Infof("ticktack, cacheConsumer func running, push %v tipsets", n.cache.Len())
 			f()
 		}
 	}

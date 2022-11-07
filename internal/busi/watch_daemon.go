@@ -66,7 +66,7 @@ func (s *NotifyServer) Watcher(ctx context.Context, done func()) (bool, error) {
 		// 		log.Errorf("keepalive failed, err: %s\n", err)
 		// 		return false, err
 		// 	}
-		//      log.Info("Ticktack: call ID method.")
+		//     log.Info("Ticktack: call ID method.")
 		case headerSlice, ok := <-notifyChannel:
 			if !ok {
 				log.Errorf("calling ChainNotify channel err: %s", err)
