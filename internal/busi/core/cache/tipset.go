@@ -52,3 +52,7 @@ func (c *TipSetCache) Add(ts *types.TipSet) {
 		}
 	}
 }
+
+func (c *TipSetCache) Len() int {
+	return len(c.buffer)
+}
