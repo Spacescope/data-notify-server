@@ -63,7 +63,7 @@ func ReportTipsetState(ctx context.Context, r *TipsetState) *utils.BuErrorRespon
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: utils.ErrDataExtractNotifyTopicNotFoundErr}
 	}
 
-	// find tipset of this topic
+	// find current version tipset of this topic
 	if hasTipset, err = utils.EngineGroup[utils.DBExtract].Where("topic_id = ? and tipset = ? and version = ?", topic.Id, r.Tipset, r.Version).Get(&tipset); err != nil {
 		log.Errorf("report tipset state execute sql error: %v", err)
 		return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
