@@ -74,7 +74,7 @@ func ReportTipsetState(ctx context.Context, r *TipsetState) *utils.BuErrorRespon
 	}
 
 	if tipset.State == 1 {
-		log.Warn("The previous tipset's task has been successfully executed: %+v, request params are: %+v", tipset, r)
+		log.Warnf("The previous tipset's task has been successfully executed: %+v, request params are: %+v", tipset, r)
 		return nil
 	} else {
 		tipset.State = r.State
