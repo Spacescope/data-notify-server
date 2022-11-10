@@ -61,12 +61,12 @@ func (s *NotifyServer) Watcher(ctx context.Context, done func()) (bool, error) {
 		case <-ctx.Done():
 			log.Errorf("watcher, ctx done, receive signal: %s", ctx.Err().Error())
 			return true, nil
-		// case <-time.After(time.Second * 30): // heartbeat
-		// 	if _, err := api.ID(ctx); err != nil {
-		// 		log.Errorf("keepalive failed, err: %s\n", err)
-		// 		return false, err
-		// 	}
-		//     log.Info("Ticktack: call ID method.")
+		case <-time.After(time.Second * 60): // heartbeat
+			if _, err := api.ChainHead(ctx); err != nil { // Due to Lotus didn't offer keepalive rpc, we call ChainHead method and treat it as keepalive RPC.
+				log.Errorf("keepalive failed, err: %s\n", err)
+				return false, err
+			}
+			log.Info("Ticktack: call heartbeat method.")
 		case headerSlice, ok := <-notifyChannel:
 			if !ok {
 				log.Errorf("calling ChainNotify channel err: %s", err)
