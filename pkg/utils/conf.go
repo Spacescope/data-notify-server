@@ -14,10 +14,11 @@ type TomlConfig struct {
 }
 
 type DataExtraction struct {
-	Addr   string `toml:"listen"`
-	DB     string `toml:"db"`
-	Lotus0 string `toml:"Lotus0"`
-	MQ     string `toml:"mq"`
+	Addr      string `toml:"listen"`
+	DB        string `toml:"db"`
+	Lotus0    string `toml:"lotus0"`
+	MQ        string `toml:"mq"`
+	GapOffset uint64 `toml:"gapOffset"`
 }
 
 func InitConfFile(file string, cf *TomlConfig) error {

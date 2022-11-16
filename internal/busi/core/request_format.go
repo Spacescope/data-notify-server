@@ -38,3 +38,19 @@ func (r *TipsetState) Validate() error {
 
 	return nil
 }
+
+type Walk struct {
+	MinHeight uint64 `form:"from" json:"from"`
+	MaxHeight uint64 `form:"to" json:"to"`
+	Topic     string `form:"topic" json:"topic" binding:"required" desc:"example: all, it means walk all topics"`
+	Lotus0    string `form:"-" json:"-"`
+	Mq        string `form:"-" json:"-"`
+}
+
+func (r *Walk) Validate() error {
+	if r.MinHeight > r.MaxHeight {
+		return errors.New("'from' should less or equal than 'to'")
+	}
+
+	return nil
+}

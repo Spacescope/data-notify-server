@@ -80,6 +80,7 @@ const (
 	CodeDataExtractNotify                       = 40000
 	CodeDataExtractNotifyTopicNotFoundErr       = 40001
 	CodeDataExtractNotiftTopicTipsetNotFoundErr = 40002
+	CodeDataExtractNotifyHeightErr              = 40003
 )
 
 var (
@@ -92,6 +93,8 @@ var (
 
 	ErrDataExtractNotifyTopicNotFoundErr  = &Response{Code: CodeDataExtractNotifyTopicNotFoundErr, Message: "topic not found."}
 	ErrDataExtractNotifyTipsetNotFoundErr = &Response{Code: CodeDataExtractNotiftTopicTipsetNotFoundErr, Message: "tipset not found, maybe it was updated."}
+
+	ErrDataExtractNotifyHeightErr = &Response{Code: CodeDataExtractNotifyHeightErr, Message: "cannot walk history, chain head is earlier than minimum height."}
 )
 
 type Gin struct {

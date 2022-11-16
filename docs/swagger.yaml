@@ -148,4 +148,37 @@ paths:
             $ref: '#/definitions/utils.ResponseWithRequestId'
       tags:
       - DATA-EXTRACTION-API-Internal-V1
+  /api/v1/walk:
+    post:
+      consumes:
+      - application/json
+      - application/json
+      description: walk the historical DAG's tipsets.
+      parameters:
+      - in: query
+        name: from
+        type: integer
+      - in: query
+        name: to
+        type: integer
+      - in: query
+        name: topic
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ResponseWithRequestId'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ResponseWithRequestId'
+      tags:
+      - DATA-EXTRACTION-API-Internal-V1
 swagger: "2.0"
