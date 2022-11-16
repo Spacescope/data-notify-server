@@ -58,6 +58,8 @@ func ReportTipsetState(ctx context.Context, r *TipsetState) *utils.BuErrorRespon
 		err error
 	)
 
+	log.Infof("Report tipset state from task model, state: %+v", *r)
+
 	// find topic
 	if hasTopic, err = utils.EngineGroup[utils.DBExtract].Where("topic_name = ?", r.Topic).Get(&topic); err != nil {
 		log.Errorf("report tipset state execute sql error: %v", err)
