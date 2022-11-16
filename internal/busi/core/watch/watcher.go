@@ -158,7 +158,7 @@ func recordTipset(ctx context.Context, topicId uint64, topicName string, tipset 
 			LastUpdate:    time.Now(),
 		}
 
-		if _, err := utils.EngineGroup[utils.DBExtract].Where("id = ?", t.Id).Cols("state", "not_found_state", "retry_times", "description").Update(&t); err != nil {
+		if _, err := utils.EngineGroup[utils.DBExtract].Where("id = ?", t.Id).Cols("version", "state", "not_found_state", "retry_times", "description").Update(&t); err != nil {
 			log.Errorf("record tipset execute sql error: %v", err)
 			return 0, err
 		}
