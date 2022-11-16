@@ -27,7 +27,7 @@ func (s *HttpServer) registerV1(r *gin.Engine) {
 		apiv1.DELETE("/topic", v1.TopicDelete)
 		apiv1.POST("/task_state", v1.ReportTipsetState)
 
-		apiv1.GET("/walk", setWalkerConfig(s.lotus0, s.mq), v1.WalkTipsets)
+		apiv1.POST("/walk", setWalkerConfig(s.lotus0, s.mq), v1.WalkTipsets)
 	}
 }
 
