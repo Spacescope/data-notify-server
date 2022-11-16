@@ -64,7 +64,7 @@ func TopicDelete(c *gin.Context) {
 	app.HTTPResponseOK(nil)
 }
 
-// task state godoc
+// Task state godoc
 // @Description task will report tipset state with this API.
 // @Tags DATA-EXTRACTION-API-Internal-V1
 // @Accept application/json,json
@@ -89,6 +89,45 @@ func ReportTipsetState(c *gin.Context) {
 	}
 
 	resp := core.ReportTipsetState(c.Request.Context(), &r)
+	if resp != nil {
+		app.HTTPResponse(resp.HttpCode, resp.Response)
+		return
+	}
+
+	app.HTTPResponseOK(nil)
+}
+
+// Walk tipsets godoc
+// @Description walk the historical DAG's tipsets.
+// @Tags DATA-EXTRACTION-API-Internal-V1
+// @Accept application/json,json
+// @Produce application/json,json
+// @Param Walk query core.Walk false "Walk"
+// @Success 200 {object} nil
+// @Failure 400 {object} utils.ResponseWithRequestId
+// @Failure 500 {object} utils.ResponseWithRequestId
+// @Router /api/v1/walk [post]
+func WalkTipsets(c *gin.Context) {
+	app := utils.Gin{C: c}
+
+	var r core.Walk
+	if err := c.ShouldBindQuery(&r); err != nil {
+		app.HTTPResponse(http.StatusBadRequest, utils.NewResponse(utils.CodeBadRequest, err.Error(), nil))
+		return
+	}
+
+	if err := r.Validate(); err != nil {
+		app.HTTPResponse(http.StatusBadRequest, utils.NewResponse(utils.CodeBadRequest, err.Error(), nil))
+		return
+	}
+
+	lotus0, _ := c.Get(LOTUS0)
+	r.Lotus0, _ = lotus0.(string)
+
+	mq, _ := c.Get(MQ)
+	r.Mq, _ = mq.(string)
+
+	resp := core.WalkTipsetsRun(c.Request.Context(), &r)
 	if resp != nil {
 		app.HTTPResponse(resp.HttpCode, resp.Response)
 		return

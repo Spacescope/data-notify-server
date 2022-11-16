@@ -6,7 +6,11 @@ import (
 	"data-extraction-notify/pkg/utils"
 	"net/http"
 
+	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/go-redis/redis"
 	log "github.com/sirupsen/logrus"
+
+	"data-extraction-notify/internal/busi/core/walk"
 )
 
 func TopicSignIn(ctx context.Context, r *Topic) *utils.BuErrorResponse {
@@ -86,6 +90,55 @@ func ReportTipsetState(ctx context.Context, r *TipsetState) *utils.BuErrorRespon
 			log.Errorf("report tipset state execute sql error: %v", err)
 			return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
 		}
+	}
+
+	return nil
+}
+
+// https://github.com/filecoin-project/lily/blob/master/chain/walk/walker.go#L43
+func WalkTipsetsRun(ctx context.Context, r *Walk) *utils.BuErrorResponse {
+	lotusAPI, closer, err := utils.LotusHandshake(ctx, r.Lotus0)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
+	}
+	defer closer()
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     r.Mq,
+		Password: "",
+		DB:       0,
+	})
+	defer rdb.Close()
+
+	log.Infof("connect to mq: %v", r.Mq)
+	if err := rdb.Ping().Err(); err != nil {
+		log.Error(err)
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	//----------
+
+	head, err := lotusAPI.ChainHead(ctx)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+
+	}
+	if head.Height() < abi.ChainEpoch(r.MinHeight) {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: utils.ErrDataExtractNotifyHeightErr}
+	}
+
+	start := head
+	// Start at maxHeight+1 so that the tipset at maxHeight becomes the parent for any tasks that need to make a diff between two tipsets.
+	// A walk where min==max must still process two tipsets to be sure of extracting data.
+	if head.Height() > abi.ChainEpoch(r.MaxHeight+1) {
+		start, err = lotusAPI.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(r.MaxHeight), head.Key())
+		if err != nil {
+			return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+		}
+	}
+
+	if err := walk.NewWalker(lotusAPI, rdb, r.MinHeight, r.MaxHeight, r.Topic).WalkChain(ctx, start); err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
 
 	return nil

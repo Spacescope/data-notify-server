@@ -9,6 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func setWalkerConfig(Lotus0, Mq string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(v1.LOTUS0, Lotus0)
+		c.Set(v1.MQ, Mq)
+
+		c.Next()
+	}
+}
+
 func (s *HttpServer) registerV1(r *gin.Engine) {
 	apiv1 := r.Group("/api/v1")
 	{
@@ -17,6 +26,8 @@ func (s *HttpServer) registerV1(r *gin.Engine) {
 		apiv1.POST("/topic", v1.TopicSignIn)
 		apiv1.DELETE("/topic", v1.TopicDelete)
 		apiv1.POST("/task_state", v1.ReportTipsetState)
+
+		apiv1.GET("/walk", setWalkerConfig(s.lotus0, s.mq), v1.WalkTipsets)
 	}
 }
 
@@ -51,22 +62,23 @@ func (s *HttpServer) Start() {
 			param.ErrorMessage,
 		)
 	}))
+
 	r.Use(gin.Recovery())
-
 	s.RegisterRoutes(r)
-
 	r.Run(s.addr)
-
 }
 
 type HttpServer struct {
-	addr string
+	addr      string
+	lotus0    string
+	mq        string
+	gapOffset uint64
 }
 
-func NewHttpServer(addr string) *HttpServer {
-	return &HttpServer{addr}
+func NewHttpServer(addr string, lotus string, mq string, gapOffset uint64) *HttpServer {
+	return &HttpServer{addr, lotus, mq, gapOffset}
 }
 
-func HttpServerStart(addr string) {
-	NewHttpServer(addr).Start()
+func HttpServerStart(addr string, lotus string, mq string, gapOffset uint64) {
+	NewHttpServer(addr, lotus, mq, gapOffset).Start()
 }

@@ -176,6 +176,57 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/walk": {
+            "post": {
+                "description": "walk the historical DAG's tipsets.",
+                "consumes": [
+                    "application/json",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "DATA-EXTRACTION-API-Internal-V1"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "topic",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

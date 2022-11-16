@@ -44,7 +44,7 @@ func (s *Server) Start() {
 	s.initconfig()
 	s.setLogTimeformat()
 
-	go HttpServerStart(s.Cf.DataExtraction.Addr)
+	go HttpServerStart(s.Cf.DataExtraction.Addr, s.Cf.DataExtraction.Lotus0, s.Cf.DataExtraction.MQ, s.Cf.DataExtraction.GapOffset)
 
 	{
 		s.wg.Add(2)
