@@ -20,6 +20,39 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/gapfill": {
+            "post": {
+                "description": "automatic fill the gap's tipsets.",
+                "consumes": [
+                    "application/json",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "DATA-EXTRACTION-API-Internal-V1-CallByManual"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/ping": {
             "get": {
                 "description": "Healthy examination",
@@ -62,7 +95,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByTaskModel"
                 ],
                 "parameters": [
                     {
@@ -105,7 +138,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByTaskModel"
                 ],
                 "parameters": [
                     {
@@ -146,7 +179,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByTaskModel"
                 ],
                 "parameters": [
                     {
@@ -189,7 +222,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByManual"
                 ],
                 "parameters": [
                     {
@@ -290,7 +323,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "extractor-api.spacescope.io",
-	BasePath:         "/api/v1",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "spacescope data extraction notify backend",
 	Description:      "spacescope data extraction api backend",

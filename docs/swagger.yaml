@@ -1,4 +1,4 @@
-basePath: /api/v1
+basePath: /
 definitions:
   core.TipsetState:
     properties:
@@ -45,6 +45,28 @@ info:
   title: spacescope data extraction notify backend
   version: "1.0"
 paths:
+  /api/v1/gapfill:
+    post:
+      consumes:
+      - application/json
+      - application/json
+      description: automatic fill the gap's tipsets.
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ResponseWithRequestId'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ResponseWithRequestId'
+      tags:
+      - DATA-EXTRACTION-API-Internal-V1-CallByManual
   /api/v1/ping:
     get:
       consumes:
@@ -92,7 +114,7 @@ paths:
           schema:
             $ref: '#/definitions/utils.ResponseWithRequestId'
       tags:
-      - DATA-EXTRACTION-API-Internal-V1
+      - DATA-EXTRACTION-API-Internal-V1-CallByTaskModel
   /api/v1/topic:
     delete:
       consumes:
@@ -120,7 +142,7 @@ paths:
           schema:
             $ref: '#/definitions/utils.ResponseWithRequestId'
       tags:
-      - DATA-EXTRACTION-API-Internal-V1
+      - DATA-EXTRACTION-API-Internal-V1-CallByTaskModel
     post:
       consumes:
       - application/json
@@ -147,7 +169,7 @@ paths:
           schema:
             $ref: '#/definitions/utils.ResponseWithRequestId'
       tags:
-      - DATA-EXTRACTION-API-Internal-V1
+      - DATA-EXTRACTION-API-Internal-V1-CallByTaskModel
   /api/v1/walk:
     post:
       consumes:
@@ -180,5 +202,5 @@ paths:
           schema:
             $ref: '#/definitions/utils.ResponseWithRequestId'
       tags:
-      - DATA-EXTRACTION-API-Internal-V1
+      - DATA-EXTRACTION-API-Internal-V1-CallByManual
 swagger: "2.0"

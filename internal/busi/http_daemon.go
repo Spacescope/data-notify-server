@@ -23,11 +23,14 @@ func (s *HttpServer) registerV1(r *gin.Engine) {
 	{
 		apiv1.GET("/ping", v1.Ping)
 
-		apiv1.POST("/topic", v1.TopicSignIn)
-		apiv1.DELETE("/topic", v1.TopicDelete)
-		apiv1.POST("/task_state", v1.ReportTipsetState)
+		apiv1.POST("/topic", v1.TopicSignIn)            //-CallByTaskModel
+		apiv1.DELETE("/topic", v1.TopicDelete)          //-CallByTaskModel
+		apiv1.POST("/task_state", v1.ReportTipsetState) //-CallByTaskModel
 
-		apiv1.POST("/walk", setWalkerConfig(s.lotus0, s.mq), v1.WalkTipsets)
+		apiv1.POST("/walk", setWalkerConfig(s.lotus0, s.mq), v1.WalkTipsets) //-CallByManual
+
+		apiv1.POST("/gapfill", setWalkerConfig(s.lotus0, s.mq), v1.GapFill) //-CallByScheduler
+		apiv1.POST("/retry", setWalkerConfig(s.lotus0, s.mq))               //-CallByScheduler
 	}
 }
 
@@ -69,16 +72,15 @@ func (s *HttpServer) Start() {
 }
 
 type HttpServer struct {
-	addr      string
-	lotus0    string
-	mq        string
-	gapOffset uint64
+	addr   string
+	lotus0 string
+	mq     string
 }
 
-func NewHttpServer(addr string, lotus string, mq string, gapOffset uint64) *HttpServer {
-	return &HttpServer{addr, lotus, mq, gapOffset}
+func NewHttpServer(addr string, lotus string, mq string) *HttpServer {
+	return &HttpServer{addr, lotus, mq}
 }
 
-func HttpServerStart(addr string, lotus string, mq string, gapOffset uint64) {
-	NewHttpServer(addr, lotus, mq, gapOffset).Start()
+func HttpServerStart(addr string, lotus string, mq string) {
+	NewHttpServer(addr, lotus, mq).Start()
 }
