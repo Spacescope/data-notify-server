@@ -83,7 +83,6 @@ func (w *Walker) WalkChain(ctx context.Context, ts *types.TipSet) error {
 			log.Infof("Walk has finished the jobs: %v", w.endTime)
 		}()
 
-		//for int64(w.maxHeight) >= int64(w.minHeight){
 		for ts.Height() >= abi.ChainEpoch(w.minHeight) && ts.Height() != 0 {
 			select {
 			case <-ctx.Done():

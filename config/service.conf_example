@@ -5,4 +5,3 @@ title = "spacescope-data-extraction-notify-server"
     db = "postgresql://user:password@ip:port/dbname?sslmode=disable"
     lotus0 = "wss://wss.node.glif.io/apigw/lotus/rpc/v0"
     mq = "ip:6379"
-    gapOffset = 6

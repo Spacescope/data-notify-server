@@ -10,6 +10,8 @@ import (
 	"github.com/go-redis/redis"
 	log "github.com/sirupsen/logrus"
 
+	"data-extraction-notify/internal/busi/core/gap"
+	"data-extraction-notify/internal/busi/core/replay"
 	"data-extraction-notify/internal/busi/core/walk"
 )
 
@@ -138,6 +140,99 @@ func WalkTipsetsRun(ctx context.Context, r *Walk) *utils.BuErrorResponse {
 	}
 
 	if err := walk.NewWalker(lotusAPI, rdb, r.MinHeight, r.MaxHeight, r.Topic).WalkChain(ctx, start); err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	return nil
+}
+
+// There are two main points in time when gaps happened
+// a. network fluctuations
+// b. system(Lotus0, notify server, task model, mq) upgrade
+// we should schedule this api per 1 minute, check the height from "current head-10-60height" to "current head-10height"(30mins enough to upgrade the system)
+func GapFill(ctx context.Context, r *Gap) *utils.BuErrorResponse {
+	lotusAPI, closer, err := utils.LotusHandshake(ctx, r.Lotus0)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
+	}
+	defer closer()
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     r.Mq,
+		Password: "",
+		DB:       0,
+	})
+	defer rdb.Close()
+
+	log.Infof("connect to mq: %v", r.Mq)
+	if err := rdb.Ping().Err(); err != nil {
+		log.Error(err)
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	//----------
+	head, err := lotusAPI.ChainHead(ctx)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	maxHeight := head.Height() - 10
+	minHeight := head.Height() - 70
+
+	if maxHeight <= 0 || minHeight <= 0 {
+		return nil
+	}
+
+	start, err := lotusAPI.ChainGetTipSetByHeight(ctx, maxHeight, head.Key())
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	if err := gap.NewGapper(lotusAPI, rdb, uint64(minHeight), uint64(start.Height())).GapChain(ctx, start); err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	return nil
+}
+
+func ReplayTipsets(ctx context.Context, r *Retry) *utils.BuErrorResponse {
+	lotusAPI, closer, err := utils.LotusHandshake(ctx, r.Lotus0)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
+	}
+	defer closer()
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     r.Mq,
+		Password: "",
+		DB:       0,
+	})
+	defer rdb.Close()
+
+	log.Infof("connect to mq: %v", r.Mq)
+	if err := rdb.Ping().Err(); err != nil {
+		log.Error(err)
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	//----------
+	head, err := lotusAPI.ChainHead(ctx)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	maxHeight := head.Height() - 20
+
+	if maxHeight <= 0 {
+		return nil
+	}
+
+	start, err := lotusAPI.ChainGetTipSetByHeight(ctx, maxHeight, head.Key())
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	if err := replay.NewReplayer(lotusAPI, rdb, uint64(start.Height())).ReplayChain(ctx); err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
 

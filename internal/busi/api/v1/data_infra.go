@@ -10,7 +10,7 @@ import (
 
 // Message queue topic sign in godoc
 // @Description task group will sign in a mq topic use this API.
-// @Tags DATA-EXTRACTION-API-Internal-V1
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByTaskModel
 // @Accept application/json,json
 // @Produce application/json,json
 // @Param Topic body core.Topic false "Topic"
@@ -38,7 +38,7 @@ func TopicSignIn(c *gin.Context) {
 
 // Message queue topic delete godoc
 // @Description delete a topic.
-// @Tags DATA-EXTRACTION-API-Internal-V1
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByTaskModel
 // @Accept application/json,json
 // @Produce application/json,json
 // @Param Topic body core.Topic false "Topic"
@@ -66,7 +66,7 @@ func TopicDelete(c *gin.Context) {
 
 // Task state godoc
 // @Description task will report tipset state with this API.
-// @Tags DATA-EXTRACTION-API-Internal-V1
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByTaskModel
 // @Accept application/json,json
 // @Produce application/json,json
 // @Param TipsetState body core.TipsetState false "TipsetState"
@@ -99,7 +99,7 @@ func ReportTipsetState(c *gin.Context) {
 
 // Walk tipsets godoc
 // @Description walk the historical DAG's tipsets.
-// @Tags DATA-EXTRACTION-API-Internal-V1
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByManual
 // @Accept application/json,json
 // @Produce application/json,json
 // @Param Walk query core.Walk false "Walk"
@@ -128,6 +128,65 @@ func WalkTipsets(c *gin.Context) {
 	r.Mq, _ = mq.(string)
 
 	resp := core.WalkTipsetsRun(c.Request.Context(), &r)
+	if resp != nil {
+		app.HTTPResponse(resp.HttpCode, resp.Response)
+		return
+	}
+
+	app.HTTPResponseOK(nil)
+}
+
+// AutoGapFill tipsets godoc
+// @Description automatic fill the gap's tipsets.
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByScheduler
+// @Accept application/json,json
+// @Produce application/json,json
+// @Param Gap query core.Gap false "Gap"
+// @Success 200 {object} nil
+// @Failure 400 {object} utils.ResponseWithRequestId
+// @Failure 500 {object} utils.ResponseWithRequestId
+// @Router /api/v1/gapfill [post]
+func GapFill(c *gin.Context) {
+	app := utils.Gin{C: c}
+
+	var r core.Gap
+
+	lotus0, _ := c.Get(LOTUS0)
+	r.Lotus0, _ = lotus0.(string)
+
+	mq, _ := c.Get(MQ)
+	r.Mq, _ = mq.(string)
+
+	resp := core.GapFill(c.Request.Context(), &r)
+	if resp != nil {
+		app.HTTPResponse(resp.HttpCode, resp.Response)
+		return
+	}
+
+	app.HTTPResponseOK(nil)
+}
+
+// TipsetRetry godoc
+// @Description replay the failed tipsets.
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByScheduler
+// @Accept application/json,json
+// @Produce application/json,json
+// @Success 200 {object} nil
+// @Failure 400 {object} utils.ResponseWithRequestId
+// @Failure 500 {object} utils.ResponseWithRequestId
+// @Router /api/v1/retry [post]
+func ReplayTipsets(c *gin.Context) {
+	app := utils.Gin{C: c}
+
+	var r core.Retry
+
+	lotus0, _ := c.Get(LOTUS0)
+	r.Lotus0, _ = lotus0.(string)
+
+	mq, _ := c.Get(MQ)
+	r.Mq, _ = mq.(string)
+
+	resp := core.ReplayTipsets(c.Request.Context(), &r)
 	if resp != nil {
 		app.HTTPResponse(resp.HttpCode, resp.Response)
 		return

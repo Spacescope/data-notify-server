@@ -54,3 +54,13 @@ func (r *Walk) Validate() error {
 
 	return nil
 }
+
+type Gap struct {
+	Lotus0 string `form:"-" json:"-"`
+	Mq     string `form:"-" json:"-"`
+}
+
+type Retry struct {
+	Lotus0 string `form:"-" json:"-"`
+	Mq     string `form:"-" json:"-"`
+}

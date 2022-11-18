@@ -11,8 +11,41 @@
         "version": "1.0"
     },
     "host": "extractor-api.spacescope.io",
-    "basePath": "/api/v1",
+    "basePath": "/",
     "paths": {
+        "/api/v1/gapfill": {
+            "post": {
+                "description": "automatic fill the gap's tipsets.",
+                "consumes": [
+                    "application/json",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "DATA-EXTRACTION-API-Internal-V1-CallByScheduler"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/ping": {
             "get": {
                 "description": "Healthy examination",
@@ -43,6 +76,39 @@
                 }
             }
         },
+        "/api/v1/retry": {
+            "post": {
+                "description": "replay the failed tipsets.",
+                "consumes": [
+                    "application/json",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "DATA-EXTRACTION-API-Internal-V1-CallByScheduler"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/task_state": {
             "post": {
                 "description": "task will report tipset state with this API.",
@@ -55,7 +121,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByTaskModel"
                 ],
                 "parameters": [
                     {
@@ -98,7 +164,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByTaskModel"
                 ],
                 "parameters": [
                     {
@@ -139,7 +205,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByTaskModel"
                 ],
                 "parameters": [
                     {
@@ -182,7 +248,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "DATA-EXTRACTION-API-Internal-V1"
+                    "DATA-EXTRACTION-API-Internal-V1-CallByManual"
                 ],
                 "parameters": [
                     {
