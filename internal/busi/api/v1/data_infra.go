@@ -138,7 +138,7 @@ func WalkTipsets(c *gin.Context) {
 
 // AutoGapFill tipsets godoc
 // @Description automatic fill the gap's tipsets.
-// @Tags DATA-EXTRACTION-API-Internal-V1-CallByManual
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByScheduler
 // @Accept application/json,json
 // @Produce application/json,json
 // @Param Gap query core.Gap false "Gap"
@@ -158,6 +158,35 @@ func GapFill(c *gin.Context) {
 	r.Mq, _ = mq.(string)
 
 	resp := core.GapFill(c.Request.Context(), &r)
+	if resp != nil {
+		app.HTTPResponse(resp.HttpCode, resp.Response)
+		return
+	}
+
+	app.HTTPResponseOK(nil)
+}
+
+// TipsetRetry godoc
+// @Description replay the failed tipsets.
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByScheduler
+// @Accept application/json,json
+// @Produce application/json,json
+// @Success 200 {object} nil
+// @Failure 400 {object} utils.ResponseWithRequestId
+// @Failure 500 {object} utils.ResponseWithRequestId
+// @Router /api/v1/retry [post]
+func ReplayTipsets(c *gin.Context) {
+	app := utils.Gin{C: c}
+
+	var r core.Retry
+
+	lotus0, _ := c.Get(LOTUS0)
+	r.Lotus0, _ = lotus0.(string)
+
+	mq, _ := c.Get(MQ)
+	r.Mq, _ = mq.(string)
+
+	resp := core.ReplayTipsets(c.Request.Context(), &r)
 	if resp != nil {
 		app.HTTPResponse(resp.HttpCode, resp.Response)
 		return

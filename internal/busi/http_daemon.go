@@ -29,8 +29,8 @@ func (s *HttpServer) registerV1(r *gin.Engine) {
 
 		apiv1.POST("/walk", setWalkerConfig(s.lotus0, s.mq), v1.WalkTipsets) //-CallByManual
 
-		apiv1.POST("/gapfill", setWalkerConfig(s.lotus0, s.mq), v1.GapFill) //-CallByScheduler
-		apiv1.POST("/retry", setWalkerConfig(s.lotus0, s.mq))               //-CallByScheduler
+		apiv1.POST("/gapfill", setWalkerConfig(s.lotus0, s.mq), v1.GapFill)     //-CallByScheduler
+		apiv1.POST("/retry", setWalkerConfig(s.lotus0, s.mq), v1.ReplayTipsets) //-CallByScheduler
 	}
 }
 

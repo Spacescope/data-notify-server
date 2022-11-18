@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"data-extraction-notify/internal/busi/core/gap"
+	"data-extraction-notify/internal/busi/core/replay"
 	"data-extraction-notify/internal/busi/core/walk"
 )
 
@@ -188,6 +189,50 @@ func GapFill(ctx context.Context, r *Gap) *utils.BuErrorResponse {
 	}
 
 	if err := gap.NewGapper(lotusAPI, rdb, uint64(minHeight), uint64(start.Height())).GapChain(ctx, start); err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	return nil
+}
+
+func ReplayTipsets(ctx context.Context, r *Retry) *utils.BuErrorResponse {
+	lotusAPI, closer, err := utils.LotusHandshake(ctx, r.Lotus0)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
+	}
+	defer closer()
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     r.Mq,
+		Password: "",
+		DB:       0,
+	})
+	defer rdb.Close()
+
+	log.Infof("connect to mq: %v", r.Mq)
+	if err := rdb.Ping().Err(); err != nil {
+		log.Error(err)
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	//----------
+	head, err := lotusAPI.ChainHead(ctx)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	maxHeight := head.Height() - 20
+
+	if maxHeight <= 0 {
+		return nil
+	}
+
+	start, err := lotusAPI.ChainGetTipSetByHeight(ctx, maxHeight, head.Key())
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	if err := replay.NewReplayer(lotusAPI, rdb, uint64(start.Height())).ReplayChain(ctx); err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
 
