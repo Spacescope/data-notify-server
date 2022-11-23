@@ -29,5 +29,4 @@ docker run -v /home/ec2-user/data-extraction-notify/config:/etc/data-extraction-
 ```
 
 ### Refer
-1. https://docs.google.com/document/d/1TEzwF_y4pJCv8_GfnCOZjYcdcyt7pFuX4zOP0htJ7tI/edit
-2. https://docs.google.com/document/d/1LaAQCv4ZPj24TA2RdvMhqEBlf_A7d_t4BHlaktFhjLo/edit
+1. https://docs.google.com/document/d/1HzXjjQ2OlDxuhjDh6q4R6W8EPAqhI3rNKVTz0MgkZv8/edit
