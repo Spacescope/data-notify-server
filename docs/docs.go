@@ -259,6 +259,11 @@ const docTemplate = `{
                 ],
                 "parameters": [
                     {
+                        "type": "boolean",
+                        "name": "force",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "name": "from",
                         "in": "query"

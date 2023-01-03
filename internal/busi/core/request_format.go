@@ -8,6 +8,10 @@ type Topic struct {
 	Topic string `form:"topic" json:"topic" binding:"required" example:"messages/vm_messages..."`
 }
 
+type Force struct {
+	Force bool `form:"force" json:"force" desc:"force to walk"`
+}
+
 type TipsetState struct {
 	Topic         string `form:"topic" json:"topic" binding:"required"`
 	Tipset        uint64 `form:"tipset" json:"tipset" desc:"tipset.Height()"`
@@ -43,6 +47,7 @@ type Walk struct {
 	MinHeight uint64 `form:"from" json:"from"`
 	MaxHeight uint64 `form:"to" json:"to"`
 	Topic     string `form:"topic" json:"topic" binding:"required" desc:"example: all, it means walk all topics"`
+	Force     bool   `form:"force" json:"force" desc:"force to walk"`
 	Lotus0    string `form:"-" json:"-"`
 	Mq        string `form:"-" json:"-"`
 }

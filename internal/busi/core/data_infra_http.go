@@ -49,7 +49,7 @@ func TopicSignOff(ctx context.Context, r *Topic) *utils.BuErrorResponse {
 	return nil
 }
 
-func ReportTipsetState(ctx context.Context, r *TipsetState) *utils.BuErrorResponse {
+func ReportTipsetState(ctx context.Context, r *TipsetState, force bool) *utils.BuErrorResponse {
 	var (
 		hasTopic  bool
 		hasTipset bool
@@ -79,8 +79,8 @@ func ReportTipsetState(ctx context.Context, r *TipsetState) *utils.BuErrorRespon
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: utils.ErrDataExtractNotifyTipsetNotFoundErr}
 	}
 
-	if tipset.State == 1 {
-		log.Warnf("The previous tipset's task has been successfully executed: %+v, request params are: %+v", tipset, r)
+	if !force && tipset.State == 1 {
+		log.Warnf("The tipset's task has been successfully executed: %+v, request params are: %+v", tipset, r)
 		return nil
 	} else {
 		tipset.State = r.State
@@ -139,7 +139,7 @@ func WalkTipsetsRun(ctx context.Context, r *Walk) *utils.BuErrorResponse {
 		}
 	}
 
-	if err := walk.NewWalker(lotusAPI, rdb, r.MinHeight, r.MaxHeight, r.Topic).WalkChain(ctx, start); err != nil {
+	if err := walk.NewWalker(lotusAPI, rdb, r.MinHeight, r.MaxHeight, r.Topic).WalkChain(ctx, start, r.Force); err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
 

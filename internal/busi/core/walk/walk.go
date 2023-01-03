@@ -60,7 +60,7 @@ func NewWalker(node *api.FullNodeStruct, rdb *redis.Client, minHeight, maxHeight
 	return w
 }
 
-func (w *Walker) WalkChain(ctx context.Context, ts *types.TipSet) error {
+func (w *Walker) WalkChain(ctx context.Context, ts *types.TipSet, force bool) error {
 	if w.jobIsRunning {
 		str := fmt.Sprintf("The previous walk's job has begun at the time: %v, pls wait for it finishes or ctrl^c it.", w.startTime)
 		log.Infof(str)
@@ -93,7 +93,7 @@ func (w *Walker) WalkChain(ctx context.Context, ts *types.TipSet) error {
 
 			log.Infof("Walk tipset: %v", ts.Height())
 			// busi
-			if err := w.insertMQ(ts); err != nil {
+			if err := w.insertMQ(ts, force); err != nil {
 				return err
 			}
 
@@ -131,7 +131,7 @@ func (w *Walker) topicsFind() ([]*busi.Topics, error) {
 	return t, nil
 }
 
-func (w *Walker) insertMQ(ts *types.TipSet) error {
+func (w *Walker) insertMQ(ts *types.TipSet, force bool) error {
 	if w.topics == nil { // lazy
 		var err error
 		w.topics, err = w.topicsFind()
@@ -147,12 +147,12 @@ func (w *Walker) insertMQ(ts *types.TipSet) error {
 	}
 
 	for _, topic := range w.topics {
-		version, successful, err := w.recordTipset(topic.Id, topic.TopicName, ts)
+		version, successful, err := w.recordTipset(topic.Id, topic.TopicName, ts, force)
 		if err != nil || !successful {
 			continue
 		}
 
-		b, err := json.Marshal(&busi.Message{Version: int(version), Tipset: *ts})
+		b, err := json.Marshal(&busi.Message{Version: int(version), Tipset: *ts, Force: force})
 		if err != nil {
 			log.Errorf("Walk, T: %v marshal json error: %v", ts.Height(), err)
 			return err
@@ -169,16 +169,14 @@ func (w *Walker) insertMQ(ts *types.TipSet) error {
 	return nil
 }
 
-func (w *Walker) recordTipset(topicId uint64, topicName string, ts *types.TipSet) (uint32, bool, error) {
-	tssState := make([]*busi.TipsetsState, 0)
-	if err := utils.EngineGroup[utils.DBExtract].Where("topic_id = ? and tipset = ?", topicId, ts.Height()).Find(&tssState); err != nil {
+func (w *Walker) recordTipset(topicId uint64, topicName string, ts *types.TipSet, force bool) (uint32, bool, error) {
+	var (
+		tsState busi.TipsetsState
+	)
+	b, err := utils.EngineGroup[utils.DBExtract].Where("topic_id = ? and tipset = ?", topicId, ts.Height()).Get(&tsState)
+	if err != nil {
 		log.Errorf("Walk, record tipset execute sql error: %v", err)
 		return 0, false, err
-	}
-
-	if len(tssState) != 0 {
-		log.Infof("Walk, tipset: %v/topic: %v has been processed before", ts.Height(), topicName)
-		return 0, false, nil
 	}
 
 	t := busi.TipsetsState{
@@ -194,10 +192,36 @@ func (w *Walker) recordTipset(topicId uint64, topicName string, ts *types.TipSet
 		LastUpdate:    time.Now(),
 	}
 
-	if _, err := utils.EngineGroup[utils.DBExtract].Insert(&t); err != nil {
-		log.Errorf("Walk, record tipset execute sql error: %v", err)
-		return 0, false, err
-	}
+	if !force {
+		if b {
+			log.Infof("Walk, tipset: %v/topic: %v has been processed before", ts.Height(), topicName)
+			return 0, false, nil
+		}
 
-	return t.Version, true, nil
+		if _, err := utils.EngineGroup[utils.DBExtract].Insert(&t); err != nil {
+			log.Errorf("Walk, record tipset execute sql error: %v", err)
+			return 0, false, err
+		}
+
+		return t.Version, true, nil
+	} else {
+		log.Infof("Forced walk, tipset: %v/topic: %v", ts.Height(), topicName)
+
+		if b {
+			tsState.State = 0
+			tsState.RetryTimes++
+
+			if _, err := utils.EngineGroup[utils.DBExtract].Where("id = ?", tsState.Id).Cols("state").Update(&tsState); err != nil {
+				log.Errorf("Forced Walk, record tipset execute sql error: %v", err)
+				return 0, false, err
+			}
+		} else {
+			if _, err := utils.EngineGroup[utils.DBExtract].Insert(&t); err != nil {
+				log.Errorf("Forced Walk, record tipset execute sql error: %v", err)
+				return 0, false, err
+			}
+		}
+
+		return t.Version, true, nil
+	}
 }

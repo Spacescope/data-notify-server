@@ -88,7 +88,13 @@ func ReportTipsetState(c *gin.Context) {
 		return
 	}
 
-	resp := core.ReportTipsetState(c.Request.Context(), &r)
+	var f core.Force
+	if err := c.ShouldBindQuery(&f); err != nil {
+		app.HTTPResponse(http.StatusBadRequest, utils.NewResponse(utils.CodeBadRequest, err.Error(), nil))
+		return
+	}
+
+	resp := core.ReportTipsetState(c.Request.Context(), &r, f.Force)
 	if resp != nil {
 		app.HTTPResponse(resp.HttpCode, resp.Response)
 		return
