@@ -200,6 +200,9 @@ paths:
       description: walk the historical DAG's tipsets.
       parameters:
       - in: query
+        name: force
+        type: boolean
+      - in: query
         name: from
         type: integer
       - in: query
