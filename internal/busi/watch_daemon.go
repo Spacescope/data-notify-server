@@ -47,7 +47,7 @@ func NotifyServerStart(ctx context.Context, done func(), lotus0, mq string) {
 func (s *NotifyServer) Watcher(ctx context.Context, done func()) (bool, error) { //(exit due to signal, return due to network problem/lotus problem)
 	api, closer, err := s.lotusHandshake(ctx)
 	if err != nil {
-		log.Fatalf("calling chain head: %s", err)
+		log.Fatalf("lotusHandshake error: %s", err)
 	}
 	defer closer()
 
