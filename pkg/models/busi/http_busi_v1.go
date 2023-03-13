@@ -13,7 +13,7 @@ type TipsetsState struct {
 	State         uint16    `json:"state" xorm:"integer default 0 comment('0 - enqueue, 1 - task successful, 2 - task failed')"` // 没有timeout, timeout计算时发现
 	NotFoundState uint8     `json:"not_found_state" xorm:"smallint default 0 comment('1 - tipset not found, can't find tipset is a special case of failed tasks, when state equal 2, this field takes effect')"`
 	RetryTimes    uint16    `json:"retry_time" xorm:"integer default 0"`
-	Description   string    `json:"description" xorm:"varchar(256)"`
+	Description   string    `json:"description" xorm:"text"`
 	CreateDate    time.Time `json:"create_date" xorm:"created comment('enqueue time')"`
 	LastUpdate    time.Time `json:"last_update" xorm:"updated comment('feeback time')"`
 }
