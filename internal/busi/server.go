@@ -9,7 +9,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,7 +36,7 @@ func (s *Server) initconfig() {
 func (s *Server) setLogTimeformat() {
 	timeFormater := new(log.TextFormatter)
 	timeFormater.FullTimestamp = true
-	logrus.SetFormatter(timeFormater)
+	log.SetFormatter(timeFormater)
 }
 
 func (s *Server) Start() {
