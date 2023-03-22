@@ -210,8 +210,9 @@ func (w *Walker) recordTipset(topicId uint64, topicName string, ts *types.TipSet
 		if b {
 			tsState.State = 0
 			tsState.RetryTimes++
+			tsState.Description = ""
 
-			if _, err := utils.EngineGroup[utils.DBExtract].Where("id = ?", tsState.Id).Cols("state").Update(&tsState); err != nil {
+			if _, err := utils.EngineGroup[utils.DBExtract].Where("id = ?", tsState.Id).Cols("state", "retry_times", "description").Update(&tsState); err != nil {
 				log.Errorf("Forced Walk, record tipset execute sql error: %v", err)
 				return 0, false, err
 			}
