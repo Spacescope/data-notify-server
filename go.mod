@@ -1,6 +1,6 @@
 module data-extraction-notify
 
-go 1.18
+go 1.20
 
 require (
 	github.com/filecoin-project/go-jsonrpc v0.2.1
