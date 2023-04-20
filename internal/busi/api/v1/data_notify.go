@@ -200,3 +200,41 @@ func ReplayTipsets(c *gin.Context) {
 
 	app.HTTPResponseOK(nil)
 }
+
+// ForceReplayTipsets godoc
+// @Description replay the failed tipsets, ignore retry times limit.
+// @Tags DATA-EXTRACTION-API-Internal-V1-CallByManual
+// @Accept application/json,json
+// @Produce application/json,json
+// @Param ForceRetry query core.ForceRetry true "ForceRetry"
+// @Success 200 {object} nil
+// @Failure 400 {object} utils.ResponseWithRequestId
+// @Failure 500 {object} utils.ResponseWithRequestId
+// @Router /api/v1/force_retry [post]
+func ForceReplayTipsets(c *gin.Context) {
+	app := utils.Gin{C: c}
+
+	var r core.ForceRetry
+	if err := c.ShouldBindQuery(&r); err != nil {
+		app.HTTPResponse(http.StatusBadRequest, utils.NewResponse(utils.CodeBadRequest, err.Error(), nil))
+		return
+	}
+	if err := r.Validate(); err != nil {
+		app.HTTPResponse(http.StatusBadRequest, utils.NewResponse(utils.CodeBadRequest, err.Error(), nil))
+		return
+	}
+
+	lotus0, _ := c.Get(LOTUS0)
+	r.Lotus0, _ = lotus0.(string)
+
+	mq, _ := c.Get(MQ)
+	r.Mq, _ = mq.(string)
+
+	resp := core.ForceReplayTipsets(c.Request.Context(), &r)
+	if resp != nil {
+		app.HTTPResponse(resp.HttpCode, resp.Response)
+		return
+	}
+
+	app.HTTPResponseOK(nil)
+}
