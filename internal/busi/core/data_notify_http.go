@@ -7,9 +7,11 @@ import (
 	"net/http"
 
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/go-redis/redis"
 	log "github.com/sirupsen/logrus"
 
+	"data-extraction-notify/internal/busi/core/forcereplay"
 	"data-extraction-notify/internal/busi/core/gap"
 	"data-extraction-notify/internal/busi/core/replay"
 	"data-extraction-notify/internal/busi/core/walk"
@@ -123,7 +125,6 @@ func WalkTipsetsRun(ctx context.Context, r *Walk) *utils.BuErrorResponse {
 	head, err := lotusAPI.ChainHead(ctx)
 	if err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
-
 	}
 	if head.Height() < abi.ChainEpoch(r.MinHeight) {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: utils.ErrDataExtractNotifyHeightErr}
@@ -133,7 +134,7 @@ func WalkTipsetsRun(ctx context.Context, r *Walk) *utils.BuErrorResponse {
 	// Start at maxHeight+1 so that the tipset at maxHeight becomes the parent for any tasks that need to make a diff between two tipsets.
 	// A walk where min==max must still process two tipsets to be sure of extracting data.
 	if head.Height() > abi.ChainEpoch(r.MaxHeight+1) {
-		start, err = lotusAPI.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(r.MaxHeight), head.Key())
+		start, err = lotusAPI.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(r.MaxHeight), types.EmptyTSK)
 		if err != nil {
 			return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 		}
@@ -183,7 +184,7 @@ func GapFill(ctx context.Context, r *Gap) *utils.BuErrorResponse {
 		return nil
 	}
 
-	start, err := lotusAPI.ChainGetTipSetByHeight(ctx, maxHeight, head.Key())
+	start, err := lotusAPI.ChainGetTipSetByHeight(ctx, maxHeight, types.EmptyTSK)
 	if err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
@@ -220,19 +221,45 @@ func ReplayTipsets(ctx context.Context, r *Retry) *utils.BuErrorResponse {
 	if err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
-
 	maxHeight := head.Height() - 20
 
 	if maxHeight <= 0 {
 		return nil
 	}
 
-	start, err := lotusAPI.ChainGetTipSetByHeight(ctx, maxHeight, head.Key())
+	start, err := lotusAPI.ChainGetTipSetByHeight(ctx, maxHeight, types.EmptyTSK)
 	if err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
 
 	if err := replay.NewReplayer(lotusAPI, rdb, uint64(start.Height())).ReplayChain(ctx); err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	return nil
+}
+
+func ForceReplayTipsets(ctx context.Context, r *ForceRetry) *utils.BuErrorResponse {
+	lotusAPI, closer, err := utils.LotusHandshake(ctx, r.Lotus0)
+	if err != nil {
+		return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
+	}
+	defer closer()
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     r.Mq,
+		Password: "",
+		DB:       0,
+	})
+	defer rdb.Close()
+
+	log.Infof("connect to mq: %v", r.Mq)
+	if err := rdb.Ping().Err(); err != nil {
+		log.Error(err)
+		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
+	}
+
+	if err := forcereplay.NewForceReplayer(lotusAPI, rdb, uint64(r.MinHeight), uint64(r.MaxHeight)).ReplayChain(ctx); err != nil {
 		return &utils.BuErrorResponse{HttpCode: http.StatusOK, Response: &utils.Response{Code: utils.CodeInternalServer, Message: err.Error()}}
 	}
 

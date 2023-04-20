@@ -13,6 +13,39 @@
     "host": "extractor-api.spacescope.io",
     "basePath": "/",
     "paths": {
+        "/api/v1/force_retry": {
+            "post": {
+                "description": "replay the failed tipsets, ignore retry times limit.",
+                "consumes": [
+                    "application/json",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "DATA-EXTRACTION-API-Internal-V1-CallByManual"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ResponseWithRequestId"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/gapfill": {
             "post": {
                 "description": "automatic fill the gap's tipsets.",

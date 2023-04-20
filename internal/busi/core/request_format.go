@@ -69,3 +69,18 @@ type Retry struct {
 	Lotus0 string `form:"-" json:"-"`
 	Mq     string `form:"-" json:"-"`
 }
+
+type ForceRetry struct {
+	MinHeight uint64 `form:"from" json:"from"`
+	MaxHeight uint64 `form:"to" json:"to"`
+	Lotus0    string `form:"-" json:"-"`
+	Mq        string `form:"-" json:"-"`
+}
+
+func (r *ForceRetry) Validate() error {
+	if r.MinHeight > r.MaxHeight {
+		return errors.New("'from' should less or equal than 'to'")
+	}
+
+	return nil
+}

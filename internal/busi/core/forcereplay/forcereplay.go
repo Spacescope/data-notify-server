@@ -1,4 +1,4 @@
-package replay
+package forcereplay
 
 import (
 	"context"
@@ -23,10 +23,11 @@ type replayJob struct {
 	endTime      time.Time
 }
 
-type Replayer struct {
+type ForceReplayer struct {
 	node *api.FullNodeStruct
 	rdb  *redis.Client
 
+	minHeight uint64
 	maxHeight uint64
 
 	*replayJob
@@ -35,11 +36,12 @@ type Replayer struct {
 var insJob *replayJob
 var once sync.Once
 
-func NewReplayer(node *api.FullNodeStruct, rdb *redis.Client, maxHeight uint64) *Replayer {
-	r := &Replayer{
+func NewForceReplayer(node *api.FullNodeStruct, rdb *redis.Client, minHeight, maxHeight uint64) *ForceReplayer {
+	r := &ForceReplayer{
 		node: node,
 		rdb:  rdb,
 
+		minHeight: minHeight,
 		maxHeight: maxHeight,
 	}
 
@@ -52,9 +54,9 @@ func NewReplayer(node *api.FullNodeStruct, rdb *redis.Client, maxHeight uint64) 
 	return r
 }
 
-func (r *Replayer) ReplayChain(ctx context.Context) error {
+func (r *ForceReplayer) ReplayChain(ctx context.Context) error {
 	if r.jobIsRunning {
-		str := fmt.Sprintf("The previous replay's job has begun at the time: %v, pls wait for it finishes or ctrl^c it.", r.startTime)
+		str := fmt.Sprintf("The previous force replay's job has begun at the time: %v, pls wait for it finishes or ctrl^c it.", r.startTime)
 		log.Infof(str)
 		return errors.New(str)
 	} else {
@@ -64,14 +66,14 @@ func (r *Replayer) ReplayChain(ctx context.Context) error {
 			r.jobIsRunning = true
 			r.startTime = time.Now()
 
-			log.Infof("Replay runs at time: %v", r.startTime)
+			log.Infof("Force replay runs at time: %v", r.startTime)
 		}
 
 		defer func() {
 			r.jobIsRunning = false
 			r.endTime = time.Now()
 
-			log.Infof("Replay has finished the jobs: %v", r.endTime)
+			log.Infof("Force replay has finished the jobs: %v", r.endTime)
 		}()
 
 		tss, err := r.getReplayTipsets()
@@ -82,14 +84,14 @@ func (r *Replayer) ReplayChain(ctx context.Context) error {
 		for _, busiTs := range tss {
 			select {
 			case <-ctx.Done():
-				log.Errorf("Replay cancel by: %v", ctx.Err())
+				log.Errorf("Force replay cancel by: %v", ctx.Err())
 				return nil
 			default:
 			}
 
 			t := *busiTs
 
-			log.Infof("Replay tipset: %v", busiTs.Tipset)
+			log.Infof("Force replay tipset: %v", busiTs.Tipset)
 
 			if err := r.insertMQ(ctx, t); err != nil {
 				return err
@@ -100,41 +102,41 @@ func (r *Replayer) ReplayChain(ctx context.Context) error {
 	}
 }
 
-func (r *Replayer) getReplayTipsets() ([]*busi.TipsetsState, error) {
+func (r *ForceReplayer) getReplayTipsets() ([]*busi.TipsetsState, error) {
 	t := make([]*busi.TipsetsState, 0)
 
-	if err := utils.EngineGroup[utils.DBExtract].Where("tipset <= ? and state != 1 and retry_times < 3", r.maxHeight).Find(&t); err != nil {
-		log.Errorf("Replay, getReplayTipsets execute sql error: %v", err)
+	if err := utils.EngineGroup[utils.DBExtract].Where("tipset between ? and ? and state != 1", r.minHeight, r.maxHeight).Find(&t); err != nil {
+		log.Errorf("Force replay, getReplayTipsets execute sql error: %v", err)
 		return nil, err
 	}
 
 	return t, nil
 }
 
-func (r *Replayer) insertMQ(ctx context.Context, busiTs busi.TipsetsState) error {
+func (r *ForceReplayer) insertMQ(ctx context.Context, busiTs busi.TipsetsState) error {
 	ts, err := r.node.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(busiTs.Tipset), types.EmptyTSK)
 	if err != nil {
-		log.Errorf("Replay, insertMQ ChainGetTipSetByHeight  err: %v", err)
+		log.Errorf("Force replay, insertMQ ChainGetTipSetByHeight  err: %v", err)
 		return err
 	}
 
 	busiTs.RetryTimes++
 
 	if _, err := utils.EngineGroup[utils.DBExtract].ID(busiTs.Id).Update(&busiTs); err != nil {
-		log.Errorf("Replay, insertMQ execute sql error: %v", err)
+		log.Errorf("Force replay, insertMQ execute sql error: %v", err)
 		return err
 	}
 
 	b, err := json.Marshal(&busi.Message{Version: int(busiTs.Version), Tipset: *ts})
 	if err != nil {
-		log.Errorf("Replay, T: %v marshal json error: %v", ts.Height(), err)
+		log.Errorf("Force replay, T: %v marshal json error: %v", ts.Height(), err)
 		return err
 	}
 
 	// log.Infof("Gap, push tipset: %v/version: %v to topic: %v", ts.Height(), version, topic.TopicName)
 	err = r.rdb.LPush(busiTs.TopicName, b).Err()
 	if err != nil {
-		log.Errorf("Replay, push tipset: err: %v", ts.Height(), err)
+		log.Errorf("Force replay, push tipset: err: %v", ts.Height(), err)
 		return err
 	}
 
