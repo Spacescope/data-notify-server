@@ -206,6 +206,7 @@ func ReplayTipsets(c *gin.Context) {
 // @Tags DATA-EXTRACTION-API-Internal-V1-CallByManual
 // @Accept application/json,json
 // @Produce application/json,json
+// @Param ForceRetry query core.ForceRetry true "ForceRetry"
 // @Success 200 {object} nil
 // @Failure 400 {object} utils.ResponseWithRequestId
 // @Failure 500 {object} utils.ResponseWithRequestId

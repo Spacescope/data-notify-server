@@ -34,6 +34,18 @@ const docTemplate = `{
                 "tags": [
                     "DATA-EXTRACTION-API-Internal-V1-CallByManual"
                 ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
