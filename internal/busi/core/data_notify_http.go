@@ -90,7 +90,7 @@ func ReportTipsetState(ctx context.Context, r *TipsetState, force bool) *utils.B
 		if r.State == 2 && r.NotFoundState == 1 {
 			tipset.NotFoundState = r.NotFoundState
 		}
-		if _, err = utils.EngineGroup[utils.DBExtract].Where("id = ?", tipset.Id).Update(&tipset); err != nil {
+		if _, err = utils.EngineGroup[utils.DBExtract].Where("id = ?", tipset.Id).MustCols("description").Update(&tipset); err != nil {
 			log.Errorf("report tipset state execute sql error: %v", err)
 			return &utils.BuErrorResponse{HttpCode: http.StatusInternalServerError, Response: utils.ErrInternalServer}
 		}
