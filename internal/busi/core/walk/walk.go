@@ -170,9 +170,8 @@ func (w *Walker) insertMQ(ts *types.TipSet, force bool) error {
 }
 
 func (w *Walker) recordTipset(topicId uint64, topicName string, ts *types.TipSet, force bool) (uint32, bool, error) {
-	var (
-		tsState busi.TipsetsState
-	)
+	var tsState busi.TipsetsState
+
 	b, err := utils.EngineGroup[utils.DBExtract].Where("topic_id = ? and tipset = ?", topicId, ts.Height()).Get(&tsState)
 	if err != nil {
 		log.Errorf("Walk, record tipset execute sql error: %v", err)
@@ -196,14 +195,13 @@ func (w *Walker) recordTipset(topicId uint64, topicName string, ts *types.TipSet
 		if b {
 			log.Infof("Walk, tipset: %v/topic: %v has been processed before", ts.Height(), topicName)
 			return 0, false, nil
+		} else {
+			if _, err := utils.EngineGroup[utils.DBExtract].Insert(&t); err != nil {
+				log.Errorf("Walk, record tipset execute sql error: %v", err)
+				return 0, false, err
+			}
+			return 0, true, nil
 		}
-
-		if _, err := utils.EngineGroup[utils.DBExtract].Insert(&t); err != nil {
-			log.Errorf("Walk, record tipset execute sql error: %v", err)
-			return 0, false, err
-		}
-
-		return t.Version, true, nil
 	} else {
 		log.Infof("Forced walk, tipset: %v/topic: %v", ts.Height(), topicName)
 
@@ -216,13 +214,13 @@ func (w *Walker) recordTipset(topicId uint64, topicName string, ts *types.TipSet
 				log.Errorf("Forced Walk, record tipset execute sql error: %v", err)
 				return 0, false, err
 			}
+			return tsState.Version, true, nil
 		} else {
 			if _, err := utils.EngineGroup[utils.DBExtract].Insert(&t); err != nil {
 				log.Errorf("Forced Walk, record tipset execute sql error: %v", err)
 				return 0, false, err
 			}
+			return 0, true, nil
 		}
-
-		return t.Version, true, nil
 	}
 }
