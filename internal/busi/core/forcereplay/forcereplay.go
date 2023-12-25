@@ -105,7 +105,7 @@ func (r *ForceReplayer) ReplayChain(ctx context.Context) error {
 func (r *ForceReplayer) getReplayTipsets() ([]*busi.TipsetsState, error) {
 	t := make([]*busi.TipsetsState, 0)
 
-	if err := utils.EngineGroup[utils.DBExtract].Where("tipset between ? and ? and state != 1", r.minHeight, r.maxHeight).Find(&t); err != nil {
+	if err := utils.EngineGroup[utils.DBExtract].Where("tipset between ? and ?", r.minHeight, r.maxHeight).Find(&t); err != nil {
 		log.Errorf("Force replay, getReplayTipsets execute sql error: %v", err)
 		return nil, err
 	}
