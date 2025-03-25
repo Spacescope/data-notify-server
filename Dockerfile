@@ -1,4 +1,4 @@
-FROM golang:1.22.7-bullseye AS builder
+FROM golang:1.23.7-bullseye AS builder
 
 COPY . /opt
 RUN cd /opt && go build -o bin/data-extraction-notify cmd/data-extraction-notify/main.go
