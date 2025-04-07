@@ -4,8 +4,8 @@ go 1.23.7
 
 require (
 	github.com/filecoin-project/go-jsonrpc v0.7.0
-	github.com/filecoin-project/go-state-types v0.16.0-rc7
-	github.com/filecoin-project/lotus v1.32.0-rc3
+	github.com/filecoin-project/go-state-types v0.16.0
+	github.com/filecoin-project/lotus v1.32.2
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-redis/redis v6.15.9+incompatible
