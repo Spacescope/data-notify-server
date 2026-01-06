@@ -5,7 +5,7 @@ RUN cd /opt && go build -o bin/data-extraction-notify cmd/data-extraction-notify
 
 FROM debian:trixie
 RUN apt update && apt-get install ca-certificates -y
-RUN useradd --gecos "Devops Starboard,Github,WorkPhone,HomePhone" --home /app/data-notify-server --disabled-password spacescope
+RUN useradd -m -d /app/data-notify-server -c "Devops Starboard,Github,WorkPhone,HomePhone" -s /usr/sbin/nologin spacescope
 USER spacescope
 COPY --from=builder /opt/bin/data-extraction-notify /app/data-notify-server/data-notify-server
 
